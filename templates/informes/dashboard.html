@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Informes - AlmacénApp{% endblock %}
+
+{% block header %}Dashboard de Informes{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <h3>Ventas Totales</h3>
+    <div class="stat-value">{{ estadisticas.total_ventas_mes }}</div>
+    <div class="stat-label">Últimos 30 días</div>
+  </div>
+  
+  <div class="stat-card">
+    <h3>Transacciones</h3>
+    <div class="stat-value">{{ estadisticas.ventas_mes }}</div>
+    <div class="stat-label">Últimos 30 días</div>
+  </div>
+  
+  <div class="stat-card">
+    <h3>Ventas de Hoy</h3>
+    <div class="stat-value">${{ "%.2f"|format(estadisticas.total_ventas_hoy) }}</div>
+    <div class="stat-label">{{ estadisticas.ventas_hoy }} transacciones</div>
+  </div>
+  
+  <div class="stat-card">
+    <h3>Inventario</h3>
+    <div class="stat-value">{{ estadisticas.productos_stock_bajo }}</div>
+    <div class="stat-label">Productos con stock bajo</div>
+  </div>
+</div>
+
+<div class="dashboard-sections">
+  <div class="section">
+    <h3>Productos Más Vendidos</h3>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in estadisticas.productos_top %}
+          <tr>
+            <td>{{ item.producto.nombre }}</td>
+            <td>{{ item.total_vendido }}</td>
+            <td>${{ "%.2f"|format(item.producto.precio * item.total_vendido) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3" class="text-center">No hay datos disponibles</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>Generar Informes</h3>
+    <p>Genera informes detallados para analizar el rendimiento de tu negocio.</p>
+    <div class="card-actions">
+      <a href="{{ url_for('informes.generar_informe') }}" class="btn btn-primary">Generar Informe</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

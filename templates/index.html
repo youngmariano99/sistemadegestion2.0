@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AlmacénApp{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Productos</h3>
+            <div class="stat-value">{{ estadisticas.total_productos }}</div>
+            <div class="stat-label">Total registrados</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Stock Bajo</h3>
+            <div class="stat-value">{{ estadisticas.productos_stock_bajo }}</div>
+            <div class="stat-label">Productos por reponer</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Ventas de Hoy</h3>
+            <div class="stat-value">{{ estadisticas.ventas_hoy }}</div>
+            <div class="stat-label">Total: ${{ "%.2f"|format(estadisticas.total_ventas_hoy) }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Ventas del Mes</h3>
+            <div class="stat-value">{{ estadisticas.ventas_mes }}</div>
+            <div class="stat-label">Total: ${{ "%.2f"|format(estadisticas.total_ventas_mes) }}</div>
+        </div>
+    </div>
+    
+    <div class="dashboard-sections">
+        <div class="section">
+            <h3>Productos Recientes</h3>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos_recientes %}
+                        <tr>
+                            <td>{{ producto.codigo }}</td>
+                            <td>{{ producto.nombre }}</td>
+                            <td>${{ "%.2f"|format(producto.precio) }}</td>
+                            <td>{{ producto.stock }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-footer">
+                <a href="{{ url_for('productos.lista_productos') }}" class="btn btn-link">Ver todos</a>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>Ventas Recientes</h3>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas_recientes %}
+                        <tr>
+                            <td>#{{ venta.id }}</td>
+                            <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ venta.cliente or 'Cliente general' }}</td>
+                            <td>${{ "%.2f"|format(venta.total) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-footer">
+                <a href="{{ url_for('ventas.lista_ventas') }}" class="btn btn-link">Ver todas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

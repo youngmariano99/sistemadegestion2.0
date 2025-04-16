@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Venta - AlmacénApp{% endblock %}
+
+{% block header %}Venta #{{ venta.id }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="venta-info">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Fecha:</span>
+        <span class="info-value">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Cliente:</span>
+        <span class="info-value">{{ venta.cliente or 'Cliente general' }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Método de Pago:</span>
+        <span class="info-value">{{ venta.metodo_pago }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Total:</span>
+        <span class="info-value">${{ "%.2f"|format(venta.total) }}</span>
+      </div>
+    </div>
+    
+    {% if venta.notas %}
+    <div class="venta-notas">
+      <h4>Notas:</h4>
+      <p>{{ venta.notas }}</p>
+    </div>
+    {% endif %}
+  </div>
+  
+  <h3 class="mt-4">Detalles</h3>
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Precio Unitario</th>
+          <th>Cantidad</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for detalle in venta.detalles %}
+        <tr>
+          <td>{{ detalle.producto.nombre }}</td>
+          <td>${{ "%.2f"|format(detalle.precio_unitario) }}</td>
+          <td>{{ detalle.cantidad }}</td>
+          <td>${{ "%.2f"|format(detalle.subtotal) }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="total-row">
+          <td colspan="3" class="text-right"><strong>Total:</strong></td>
+          <td><strong>${{ "%.2f"|format(venta.total) }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="form-actions">
+    <a href="{{ url_for('ventas.lista_ventas') }}" class="btn btn-link">Volver a Ventas</a>
+    <a href="#" class="btn btn-secondary" onclick="window.print()">Imprimir</a>
+  </div>
+</div>
+
+<style>
+  @media print {
+    header, .sidebar, .form-actions, .content-header {
+      display: none;
+    }
+    .card {
+      border: none;
+      box-shadow: none;
+    }
+    body {
+      background: white;
+    }
+    .content, .content-body {
+      margin: 0;
+      padding: 0;
+    }
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .info-label {
+    font-weight: 500;
+    display: block;
+    color: var(--secondary-color);
+  }
+  
+  .info-value {
+    font-size: 1.1rem;
+  }
+  
+  .venta-notas {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .total-row {
+    font-weight: 500;
+    border-top: 2px solid var(--border-color);
+  }
+  
+  .text-right {
+    text-align: right;
+  }
+  
+  .mt-4 {
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}

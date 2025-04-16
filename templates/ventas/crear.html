@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Venta - AlmacénApp{% endblock %}
+
+{% block header %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="POST" id="ventaForm">
+    <div class="section-title">
+      <h3>Detalles de Venta</h3>
+    </div>
+    
+    <div id="detalles-container">
+      <div class="detalle-item">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="producto">Producto *</label>
+            <select id="producto" name="producto_id" onchange="seleccionarProducto(this)" required>
+              <option value="">Seleccionar producto</option>
+              {% for producto in productos %}
+                {% if producto.stock > 0 %}
+                <option value="{{ producto.id }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}">
+                  {{ producto.nombre }} - ${{ "%.2f"|format(producto.precio) }} (Stock: {{ producto.stock }})
+                </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="cantidad">Cantidad *</label>
+            <input type="number" id="cantidad" name="cantidad" min="1" value="1" onchange="calcularSubtotal()" required>
+            <small id="stock_info">Stock disponible: <span id="stock_disponible">0</span></small>
+          </div>
+          
+          <div class="form-group">
+            <label for="precio_unitario">Precio Unitario *</label>
+            <input type="number" id="precio_unitario" name="precio_unitario" step="0.01" readonly>
+          </div>
+          
+          <div class="form-group">
+            <label for="subtotal">Subtotal</label>
+            <input type="number" id="subtotal" name="subtotal" step="0.01" readonly>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="agregarProducto()">Agregar</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table" id="tabla-productos">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="productos-agregados">
+          <tr id="empty-row">
+            <td colspan="5" class="text-center">No hay productos agregados</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-right"><strong>Total:</strong></td>
+            <td id="total-venta">$0.00</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    <div class="section-title">
+      <h3>Información Adicional</h3>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label for="cliente">Cliente (Opcional)</label>
+        <input type="text" id="cliente" name="cliente">
+      </div>
+      
+      <div class="form-group">
+        <label for="metodo_pago">Método de Pago *</label>
+        <select id="metodo_pago" name="metodo_pago" required>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Tarjeta">Tarjeta</option>
+          <option value="Transferencia">Transferencia</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="notas">Notas (Opcional)</label>
+      <textarea id="notas" name="notas" rows="2"></textarea>
+    </div>
+    
+    <!-- Campos ocultos para enviar los detalles de productos -->
+    <div id="detalles-hidden"></div>
+    <input type="hidden" id="total" name="total" value="0">
+    
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary" onclick="finalizarVenta()">Finalizar Venta</button>
+      <a href="{{ url_for('ventas.lista_ventas') }}" class="btn btn-link">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let productosAgregados = [];
+  let totalVenta = 0;
+  
+  function seleccionarProducto(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    if (!selectedOption.value) return;
+    
+    const precio = parseFloat(selectedOption.getAttribute('data-precio'));
+    const stock = parseInt(selectedOption.getAttribute('data-stock'));
+    
+    document.getElementById('precio_unitario').value = precio.toFixed(2);
+    document.getElementById('stock_disponible').textContent = stock;
+    calcularSubtotal();
+  }
+  
+  function calcularSubtotal() {
+    const cantidad = parseInt(document.getElementById('cantidad').value) || 0;
+    const precio = parseFloat(document.getElementById('precio_unitario').value) || 0;
+    const subtotal = cantidad * precio;
+    document.getElementById('subtotal').value = subtotal.toFixed(2);
+  }
+  
+  function agregarProducto() {
+    const productoSelect = document.getElementById('producto');
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    const precioUnitario = parseFloat(document.getElementById('precio_unitario').value);
+    const subtotal = parseFloat(document.getElementById('subtotal').value);
+    
+    if (!productoSelect.value || cantidad <= 0) {
+      alert('Seleccione un producto y una cantidad válida');
+      return;
+    }
+    
+    const stock = parseInt(productoSelect.options[productoSelect.selectedIndex].getAttribute('data-stock'));
+    if (cantidad > stock) {
+      alert(`Solo hay ${stock} unidades disponibles`);
+      return;
+    }
+    
+    // Verificar si ya existe el producto
+    const productoExistente = productosAgregados.find(p => p.id === productoSelect.value);
+    if (productoExistente) {
+      // Si la nueva cantidad total supera el stock, mostrar error
+      if ((productoExistente.cantidad + cantidad) > stock) {
+        alert(`No hay suficiente stock para agregar ${cantidad} unidades más`);
+        return;
+      }
+      
+      // Actualizar cantidad y subtotal
+      productoExistente.cantidad += cantidad;
+      productoExistente.subtotal += subtotal;
+    } else {
+      // Agregar nuevo producto
+      productosAgregados.push({
+        id: productoSelect.value,
+        nombre: productoSelect.options[productoSelect.selectedIndex].text.split(' - ')[0],
+        cantidad: cantidad,
+        precioUnitario: precioUnitario,
+        subtotal: subtotal
+      });
+    }
+    
+    actualizarTablaProductos();
+    limpiarFormularioProducto();
+  }
+  
+  function eliminarProducto(index) {
+    productosAgregados.splice(index, 1);
+    actualizarTablaProductos();
+  }
+  
+  function actualizarTablaProductos() {
+    const tbody = document.getElementById('productos-agregados');
+    const emptyRow = document.getElementById('empty-row');
+    
+    // Limpiar tabla
+    while (tbody.firstChild) {
+      tbody.removeChild(tbody.firstChild);
+    }
+    
+    totalVenta = 0;
+    
+    if (productosAgregados.length === 0) {
+      tbody.appendChild(emptyRow);
+    } else {
+      productosAgregados.forEach((producto, index) => {
+        const row = document.createElement('tr');
+        
+        const nombreCell = document.createElement('td');
+        nombreCell.textContent = producto.nombre;
+        
+        const cantidadCell = document.createElement('td');
+        cantidadCell.textContent = producto.cantidad;
+        
+        const precioCell = document.createElement('td');
+        precioCell.textContent = `$${producto.precioUnitario.toFixed(2)}`;
+        
+        const subtotalCell = document.createElement('td');
+        subtotalCell.textContent = `$${producto.subtotal.toFixed(2)}`;
+        
+        const accionesCell = document.createElement('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-link text-danger';
+        deleteBtn.textContent = 'Eliminar';
+        deleteBtn.onclick = function() { eliminarProducto(index); };
+        accionesCell.appendChild(deleteBtn);
+        
+        row.appendChild(nombreCell);
+        row.appendChild(cantidadCell);
+        row.appendChild(precioCell);
+        row.appendChild(subtotalCell);
+        row.appendChild(accionesCell);
+        
+        tbody.appendChild(row);
+        
+        totalVenta += producto.subtotal;
+      });
+    }
+    
+    document.getElementById('total-venta').textContent = `$${totalVenta.toFixed(2)}`;
+    document.getElementById('total').value = totalVenta;
+  }
+  
+  function limpiarFormularioProducto() {
+    document.getElementById('producto').value = '';
+    document.getElementById('cantidad').value = '1';
+    document.getElementById('precio_unitario').value = '';
+    document.getElementById('subtotal').value = '';
+    document.getElementById('stock_disponible').textContent = '0';
+  }
+  
+  function finalizarVenta() {
+    if (productosAgregados.length === 0) {
+      alert('Debe agregar al menos un producto a la venta');
+      return;
+    }
+    
+    // Crear campos ocultos para enviar los detalles
+    const detallesHidden = document.getElementById('detalles-hidden');
+    detallesHidden.innerHTML = '';
+    
+    productosAgregados.forEach((producto, index) => {
+      const idInput = document.createElement('input');
+      idInput.type = 'hidden';
+      idInput.name = `producto_id[]`;
+      idInput.value = producto.id;
+      
+      const cantidadInput = document.createElement('input');
+      cantidadInput.type = 'hidden';
+      cantidadInput.name = `cantidad[]`;
+      cantidadInput.value = producto.cantidad;
+      
+      const precioInput = document.createElement('input');
+      precioInput.type = 'hidden';
+      precioInput.name = `precio_unitario[]`;
+      precioInput.value = producto.precioUnitario;
+      
+      const subtotalInput = document.createElement('input');
+      subtotalInput.type = 'hidden';
+      subtotalInput.name = `subtotal[]`;
+      subtotalInput.value = producto.subtotal;
+      
+      detallesHidden.appendChild(idInput);
+      detallesHidden.appendChild(cantidadInput);
+      detallesHidden.appendChild(precioInput);
+      detallesHidden.appendChild(subtotalInput);
+    });
+    
+    document.getElementById('ventaForm').submit();
+  }
+</script>
+{% endblock %}

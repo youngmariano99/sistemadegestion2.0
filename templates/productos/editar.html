@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Producto - AlmacénApp{% endblock %}
+
+{% block header %}Editar Producto{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="POST">
+    <div class="form-group">
+      <label for="codigo">Código *</label>
+      <input type="text" id="codigo" name="codigo" value="{{ producto.codigo }}" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="nombre">Nombre *</label>
+      <input type="text" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="3">{{ producto.descripcion }}</textarea>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label for="precio">Precio *</label>
+        <input type="number" id="precio" name="precio" step="0.01" min="0" value="{{ producto.precio }}" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="stock">Stock *</label>
+        <input type="number" id="stock" name="stock" min="0" value="{{ producto.stock }}" required>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="categoria">Categoría *</label>
+      <select id="categoria" name="categoria" required>
+        <option value="">Seleccionar categoría</option>
+        <option value="Alimentos" {% if producto.categoria == 'Alimentos' %}selected{% endif %}>Alimentos</option>
+        <option value="Bebidas" {% if producto.categoria == 'Bebidas' %}selected{% endif %}>Bebidas</option>
+        <option value="Limpieza" {% if producto.categoria == 'Limpieza' %}selected{% endif %}>Limpieza</option>
+        <option value="Electrónica" {% if producto.categoria == 'Electrónica' %}selected{% endif %}>Electrónica</option>
+        <option value="Papelería" {% if producto.categoria == 'Papelería' %}selected{% endif %}>Papelería</option>
+        <option value="Otros" {% if producto.categoria == 'Otros' %}selected{% endif %}>Otros</option>
+      </select>
+    </div>
+    
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Actualizar Producto</button>
+      <a href="{{ url_for('productos.lista_productos') }}" class="btn btn-link">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

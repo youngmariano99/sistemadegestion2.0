@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario - AlmacénApp{% endblock %}
+
+{% block header %}Inventario de Productos{% endblock %}
+
+{% block content %}
+<div class="actions-bar">
+  <a href="{{ url_for('productos.crear_producto') }}" class="btn btn-primary">Agregar Producto</a>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for producto in productos %}
+        <tr>
+          <td>{{ producto.codigo }}</td>
+          <td>{{ producto.nombre }}</td>
+          <td>{{ producto.categoria }}</td>
+          <td>${{ "%.2f"|format(producto.precio) }}</td>
+          <td>{{ producto.stock }}</td>
+          <td>
+            <div class="action-buttons">
+              <a href="{{ url_for('productos.editar_producto', id=producto.id) }}" class="btn btn-link">Editar</a>
+              <form method="POST" action="{{ url_for('productos.eliminar_producto', id=producto.id) }}" class="inline-form" onsubmit="return confirm('¿Estás seguro de eliminar este producto?');">
+                <button type="submit" class="btn btn-link text-danger">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center">No hay productos registrados</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
